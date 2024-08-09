@@ -133,7 +133,7 @@
 
     function getPrompt(details) {
         return `
-You are an expert advertiser here to evaluate the suitability of a website for different types of ads. Using the metadata available for a website, determine the best suited category amongst the followig: ${listCategories().join(', ')}.
+You are an expert advertiser here to evaluate the suitability of a website for different types of ads. Using the metadata available for a website, determine the best suited category amongst the following: ${listCategories().join('\n')}.
 
 Site metadata:
 
