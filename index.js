@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         sa-detect-details
 // @namespace    stackadapt
-// @version      2024-08-09
-// @description  try to take over the world!
+// @version      2024-08-13
+// @description  simplify detecting saq_pxl and categorizing the page
 // @author       Dacheng
 // @match        *://*/*
 // @icon         none
@@ -133,7 +133,7 @@
 
     function getPrompt(details) {
         return `
-You are an expert advertiser here to evaluate the suitability of a website for different types of ads. Using the metadata available for a website, determine the best suited category amongst the following: ${listCategories().join('\n')}.
+You are an expert advertiser here to evaluate the suitability of a website for different types of ads. Using the metadata available for a website, determine the best suited category amongst the followig: ${listCategories().join('\n')}.
 
 Site metadata:
 
@@ -142,6 +142,34 @@ ${JSON.stringify(details, null, 2)}
             `
     }
 
+
+    function waitForSaq() {
+
+        return new Promise((resolve, reject) => {
+
+            let retries = 5;
+            let t;
+            const checkSaq = () => {
+                if (retries > 0) {
+                    const hasSaq = performance.getEntries().find((e) => e.name.includes('saq'));
+                    if (!hasSaq) {
+                        retries--;
+                        t = setTimeout(() => {
+                            checkSaq();
+                        }, 1000);
+                    } else {
+                        clearTimeout(t);
+                        resolve(true);
+                    }
+                } else {
+                    clearTimeout(t);
+                    reject(new Error('SAQ detection timed out'));
+                }
+
+            }
+            checkSaq();
+        });
+    }
 
     setTimeout(() => {
         function getMetaTags() {
@@ -180,23 +208,23 @@ ${JSON.stringify(details, null, 2)}
             });
             return paragraphs;
         }
+        waitForSaq().then((hasSaq) => {
 
+            const details = {
+                hasSaq: true,
+                tags: getMetaTags(),
+                headings: getHeadings(),
+                paragraphs: getParagraphs()
+            }
 
-        const details = {
-            hasSaq: !!performance.getEntries().find((e) => e.name.includes('saq')),
-            tags: getMetaTags(),
-            headings: getHeadings(),
-            paragraphs: getParagraphs()
-        }
+            if (details.hasSaq) {
+                const box = document.createElement("div");
 
-        if (details.hasSaq) {
-            const box = document.createElement("div");
+                document.body.prepend(box);
+                console.log(details);
 
-            document.body.prepend(box);
-            console.log(details);
-
-            box.innerHTML = `
-            <div style="display: flex; font-family: 'roboto', 'calibri', sans-serif, helvetica; justify-content: flex-start; align-items: center; padding: 8px; gap: 4px; background: #0476ff; color: white; position:fixed; z-index: 9999; box-shadow: 0 4px 4px #888; width: calc(100% - 16px)">
+                box.innerHTML = `
+            <div style="display: flex; font-family: 'roboto', 'calibri', sans-serif, helvetica; justify-content: flex-start; align-items: center; padding: 8px; gap: 4px; background: #0476ff; color: white; position:fixed; z-index: 99999; top: 0; left: 0; box-shadow: 0 4px 4px #888; width: calc(100% - 16px)">
                 <div>Origin: ${location.origin}</div>
                 <button id="sa-prompt-copy">Copy Prompt</button>
                 <div style="display: block; flex: 1 1;"></div>
@@ -204,12 +232,16 @@ ${JSON.stringify(details, null, 2)}
             </div>
         `
 
-            document.getElementById("sa-detect-cls").addEventListener('click', () => {
-                box.style.display = "none";
-            });
-            document.getElementById("sa-prompt-copy").addEventListener('click', () => {
-                navigator.clipboard.writeText(getPrompt(details))
-            });
-        }
+                document.getElementById("sa-detect-cls").addEventListener('click', () => {
+                    box.style.display = "none";
+                });
+                document.getElementById("sa-prompt-copy").addEventListener('click', () => {
+                    navigator.clipboard.writeText(getPrompt(details))
+                });
+            }
+        }, (err) => {
+
+        });
+
     }, 1000);
 })();
