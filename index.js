@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sa-detect-details
 // @namespace    stackadapt
-// @version      2024-08-13
+// @version      2024-09-05
 // @description  simplify detecting saq_pxl and categorizing the page
 // @author       Dacheng
 // @match        *://*/*
@@ -11,6 +11,20 @@
 
 (function () {
     'use strict';
+
+    // skip detection on blocklisted domains
+    const blocklist = [
+        'stackadapt.com',
+        'stackadapt.dev'
+    ]
+
+    if (blocklist.some((b) => {
+        return location.hostname.includes(b);
+    })) {
+        return;
+    }
+
+
     function listCategories() {
         const categories = `id	name	category_id	iab_category_id	parent_id
 1	Arts & Entertainment	c01	NULL	NULL
@@ -135,6 +149,11 @@
         return `
 You are an expert advertiser here to evaluate the suitability of a website for different types of ads. Using the metadata available for a website, determine the best suited category amongst the followig: ${listCategories().join('\n')}.
 
+Provide the output in the format: 
+
+Most likely category: <category>
+Reason: <reasoning>
+
 Site metadata:
 
 ${JSON.stringify(details, null, 2)}
@@ -170,6 +189,7 @@ ${JSON.stringify(details, null, 2)}
             checkSaq();
         });
     }
+
 
     setTimeout(() => {
         function getMetaTags() {
