@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         sa-detect-details
 // @namespace    stackadapt
-// @version      2024-09-05
-// @description  simplify detecting saq_pxl and categorizing the page
+// @version      2025-01-23
+// @description  simplify detecting saq_pxl + shopify integration pxl and categorizing the page
 // @author       Dacheng
 // @match        *://*/*
 // @icon         none
@@ -15,7 +15,8 @@
     // skip detection on blocklisted domains
     const blocklist = [
         'stackadapt.com',
-        'stackadapt.dev'
+        'stackadapt.dev',
+        'simpledsp.com'
     ]
 
     if (blocklist.some((b) => {
@@ -162,15 +163,21 @@ ${JSON.stringify(details, null, 2)}
     }
 
 
+
     function waitForSaq() {
 
         return new Promise((resolve, reject) => {
 
             let retries = 5;
             let t;
+
             const checkSaq = () => {
+
+                const hasSaqPxl = performance.getEntries().some((e) => e.name.includes('saq_pxl'));
+                const hasShopifyPxl = document.cookie.indexOf('shopify-saq-pxl') >= 0;
+
                 if (retries > 0) {
-                    const hasSaq = performance.getEntries().find((e) => e.name.includes('saq'));
+                    const hasSaq = hasSaqPxl || hasShopifyPxl
                     if (!hasSaq) {
                         retries--;
                         t = setTimeout(() => {
@@ -189,6 +196,7 @@ ${JSON.stringify(details, null, 2)}
             checkSaq();
         });
     }
+
 
 
     setTimeout(() => {
@@ -246,9 +254,9 @@ ${JSON.stringify(details, null, 2)}
                 box.innerHTML = `
             <div style="display: flex; font-family: 'roboto', 'calibri', sans-serif, helvetica; justify-content: flex-start; align-items: center; padding: 8px; gap: 4px; background: #0476ff; color: white; position:fixed; z-index: 99999; top: 0; left: 0; box-shadow: 0 4px 4px #888; width: calc(100% - 16px)">
                 <div>Origin: ${location.origin}</div>
-                <button id="sa-prompt-copy">Copy Prompt</button>
+                <button id="sa-prompt-copy" style="background: white; color: black; padding: 2px 4px; cursor: pointer;">Copy Prompt</button>
                 <div style="display: block; flex: 1 1;"></div>
-                <button id="sa-detect-cls">Close</button>
+                <button id="sa-detect-cls" style="background: white; color: black; padding: 2px 4px; cursor: pointer;">Close</button>
             </div>
         `
 

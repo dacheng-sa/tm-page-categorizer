@@ -1,0 +1,43 @@
+@startuml
+actor "User" as u
+participant "Browser" as B
+participant "Greasemonkey Script" as GM
+participant "Webpage" as WP
+participant "Performance API" as Perf
+
+u -> B: Visit a webpage
+B -> GM: Inject Greasemonkey script
+GM -> GM: Check if domain is blocklisted
+alt Blocklisted domain
+    GM --> GM: Stop execution
+else
+    GM -> GM: Set up blocklist, categories, and prompt functions
+
+    == Wait for SAQ Detection ==
+    GM -> Perf: Check for 'saq' pixel (performance entries)
+    alt SAQ detected
+        GM -> GM: Resolve SAQ detection
+
+        == Extract Metadata ==
+        GM -> WP: Get Meta tags
+        GM -> WP: Get Headings
+        GM -> WP: Get Paragraphs
+
+        GM -> GM: Create a details object (hasSaq, tags, headings, paragraphs)
+
+        == Display UI to User ==
+        GM -> WP: Inject UI box with "Copy Prompt" and "Close" buttons
+        u -> GM: Click 'Copy Prompt' button
+        GM -> GM: Generate advertising prompt with metadata
+        GM -> Clipboard: Copy prompt to clipboard
+
+        u -> GM: Click 'Close' button
+        GM -> WP: Hide the UI box
+    else SAQ not detected
+        GM -> GM: Retry SAQ detection (up to 5 times)
+        alt Timed out
+            GM -> GM: Stop execution
+        end
+    end
+end
+@enduml
