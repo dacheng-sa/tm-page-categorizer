@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         sa-detect-details
 // @namespace    stackadapt
-// @version      2025-01-23
+// @version      2025-01-23.01
 // @description  simplify detecting saq_pxl + shopify integration pxl and categorizing the page
 // @author       Dacheng
 // @match        *://*/*
@@ -174,7 +174,7 @@ ${JSON.stringify(details, null, 2)}
             const checkSaq = () => {
 
                 const hasSaqPxl = performance.getEntries().some((e) => e.name.includes('saq_pxl'));
-                const hasShopifyPxl = document.cookie.indexOf('shopify-saq-pxl') >= 0;
+                const hasShopifyPxl = document.cookie.indexOf('sa_shop-pxl') >= 0;
 
                 if (retries > 0) {
                     const hasSaq = hasSaqPxl || hasShopifyPxl
